@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/rugi123/myproxy/client/internal/logger"
 	"github.com/spf13/viper"
 )
 
@@ -15,7 +14,7 @@ type Config struct {
 		ServerIP   string  `mapstructure:"ip"`
 		ServerPort int     `mapstructure:"port"`
 	} `mapstructure:"server"`
-	LogLevel string `mapstructure:"log_level"`
+	LogLevel int `mapstructure:"log_level"`
 }
 
 func Load(path string) (error, *Config) {
@@ -28,7 +27,6 @@ func Load(path string) (error, *Config) {
 		if err != nil {
 			return fmt.Errorf("generate conf: %v", err), nil
 		}
-		logger.Info("new config generated")
 		Load(path)
 	}
 
@@ -48,7 +46,7 @@ func generateConf(path string) error {
 server:
   ip: "192.168.0.12"
   port: 8080
-log_level: "extra"`)
+log_level: 2`)
 
 	file, err := os.Create(path + "config.yaml")
 	if err != nil {

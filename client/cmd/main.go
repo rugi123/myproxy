@@ -14,7 +14,12 @@ func main() {
 	}
 	fmt.Println(cfg)
 
-	logger.Info("1")
-	logger.Warn("2")
-	logger.Norm("3")
+	var level logger.Level = logger.Level(cfg.LogLevel)
+	log := logger.New(level)
+
+	log.Debug("a")
+	log.Info("b")
+	log.Warn("c")
+	log.Error("d")
+	log.Fatal("d")
 }
