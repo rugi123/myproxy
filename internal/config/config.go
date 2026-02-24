@@ -7,55 +7,93 @@ import (
 	"github.com/spf13/viper"
 )
 
-type Config struct {
+type AppConfig struct {
 	Version float64 `mapstructure:"version"`
-	Server  struct {
-		Version    float64 `mapstructure:"version"`
-		ServerIP   string  `mapstructure:"ip"`
-		ServerPort int     `mapstructure:"port"`
-	} `mapstructure:"server"`
-	LogLevel int `mapstructure:"log_level"`
+	Port    int     `mapstructure:"port"`
 }
 
-func Load(path string) (error, *Config) {
+type BaseConfig struct {
+	App      AppConfig `mapstructure:"app"`
+	LogLevel int       `mapstructure:"log_level"`
+}
+
+type ServerConfig struct {
+	BaseConfig BaseConfig `mapstructure:",squash"`
+}
+
+type ClientConfig struct {
+	BaseConfig BaseConfig `mapstructure:",squash"`
+	Server     struct {
+		IP   string `mapstructure:"ip"`
+		Port int    `mapstructure:"port"`
+	} `mapstructure:"server"`
+}
+
+func loadConfig(path string, generateFn func(string) error, target interface{}) error {
 	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
 	viper.AddConfigPath(path)
-
-	err := viper.ReadInConfig()
-	if err != nil {
-		err = generateConf(path)
-		if err != nil {
-			return fmt.Errorf("generate conf: %v", err), nil
-		}
-		Load(path)
-	}
-
 	viper.AutomaticEnv()
 
-	var config Config
-	err = viper.Unmarshal(&config)
-	if err != nil {
-		return fmt.Errorf("unmarshal error: %v", err), nil
+	if err := viper.ReadInConfig(); err != nil {
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			if err := generateFn(path); err != nil {
+				return fmt.Errorf("generate conf error: %w", err)
+			}
+			if err := viper.ReadInConfig(); err != nil {
+				return fmt.Errorf("read genconf error: %w", err)
+			}
+		}
 	}
 
-	return nil, &config
+	if err := viper.Unmarshal(target); err != nil {
+		return fmt.Errorf("unmarshal conf error: %w", err)
+	}
+	return nil
 }
 
-func generateConf(path string) error {
-	conf := []byte(`version: 0.1
-server:
-  ip: "192.168.0.12"
-  port: 8080
-log_level: 2`)
+func LoadServer(path string) (*ServerConfig, error) {
+	var conf ServerConfig
+	if err := loadConfig(path, genServerConf, &conf); err != nil {
+		return nil, err
+	}
+	return &conf, nil
+}
 
+func LoadClient(path string) (*ClientConfig, error) {
+	var conf ClientConfig
+	if err := loadConfig(path, genClientConf, &conf); err != nil {
+		return nil, err
+	}
+	return &conf, nil
+}
+
+func genServerConf(path string) error {
+	conf := `app:
+  version: 0.1
+  port: 8080
+log_level: 4`
 	file, err := os.Create(path + "config.yaml")
 	if err != nil {
-		return fmt.Errorf("create conf err: %v", err)
+		return err
 	}
 
-	if _, err = file.Write(conf); err != nil {
-		return fmt.Errorf("write conf err: %v", err)
+	_, err = file.Write([]byte(conf))
+	return err
+}
+func genClientConf(path string) error {
+	conf := `app:
+  version: 0.1
+  port: 8080
+server: 
+  ip: 0
+  port: 8080
+log_level: 4`
+	file, err := os.Create(path + "config.yaml")
+	if err != nil {
+		return err
 	}
 
-	return nil
+	_, err = file.Write([]byte(conf))
+	return err
 }

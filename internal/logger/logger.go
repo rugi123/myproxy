@@ -23,76 +23,34 @@ func (l Level) String() string {
 	return [...]string{"FATAL", "ERROR", "WARN", "INFO", "DEBUG"}[l]
 }
 
+type Entry struct {
+	Level   Level
+	Message string
+	Args    []interface{}
+	Time    time.Time
+}
+
 type Logger struct {
-	level  Level
-	out    io.Writer
-	errOut io.Writer
+	level Level
+	out   io.Writer
+	ch    chan Entry
 }
 
-type Options func(*Logger)
-
-func WithOutput(w io.Writer) Options {
-	return func(l *Logger) {
-		l.out = w
+func New(level Level, out io.Writer, ch chan Entry) *Logger {
+	return &Logger{
+		level: level,
+		out:   out,
+		ch:    ch,
 	}
-}
-
-func WithErrOutput(w io.Writer) Options {
-	return func(l *Logger) {
-		l.errOut = w
-	}
-}
-
-func New(level Level, opts ...Options) *Logger {
-	l := &Logger{ // значения по умолчанию
-		level:  level,
-		out:    os.Stdout,
-		errOut: os.Stderr,
-	}
-
-	for _, opt := range opts { // применяем все опции
-		opt(l)
-	}
-
-	return l
 }
 
 func (l *Logger) Log(level Level, format string, args ...interface{}) {
-	if level > l.level {
-		return
+	l.ch <- Entry{
+		Level:   level,
+		Message: format,
+		Args:    args,
+		Time:    time.Now(),
 	}
-
-	timestamp := time.Now().Format("2006/01/02 15:04:05.000")
-
-	message := fmt.Sprintf(format, args...)
-
-	var col *color.Color
-
-	switch level {
-	case LevelDebug:
-		col = color.New(color.FgGreen)
-	case LevelInfo:
-		col = color.New(color.FgYellow)
-	case LevelWarn:
-		col = color.RGB(255, 165, 0) //оранжевый
-	case LevelError:
-		col = color.New(color.FgRed)
-	case LevelFatal:
-		col = color.New(color.FgRed)
-	}
-
-	levelLine := col.SprintfFunc()("[%s]", level.String())
-
-	log := fmt.Sprintf("%s %s %s", timestamp, levelLine, message)
-
-	var out io.Writer
-	if level >= LevelError {
-		out = l.errOut
-	} else {
-		out = l.out
-	}
-
-	fmt.Fprintln(out, log)
 }
 
 func (l *Logger) Debug(format string, args ...interface{}) {
@@ -110,4 +68,37 @@ func (l *Logger) Error(format string, args ...interface{}) {
 func (l *Logger) Fatal(format string, args ...interface{}) {
 	l.Log(LevelFatal, format, args...)
 	os.Exit(1)
+}
+
+func (l *Logger) Close() {
+	close(l.ch)
+}
+
+func (l *Logger) Run() {
+	var entry Entry
+
+	for {
+		entry = <-l.ch
+
+		var col func(...interface{}) string
+		switch entry.Level {
+		case LevelDebug:
+			col = color.New(color.FgGreen).SprintFunc()
+		case LevelInfo:
+			col = color.RGB(255, 127, 0).SprintFunc()
+		case LevelWarn:
+			col = color.New(color.FgGreen).SprintFunc()
+		case LevelError:
+			col = color.New(color.FgRed).SprintFunc()
+		case LevelFatal:
+			col = color.New(color.FgRed).SprintFunc()
+		}
+
+		message := fmt.Sprintf(entry.Message, entry.Args...)
+		timestamp := entry.Time.Format("2006/01/02 15:04:05.000")
+		prefix := fmt.Sprintf("[%s]", l.level.String())
+		log := fmt.Sprintf("%s %s %s", timestamp, col(prefix), message)
+
+		fmt.Fprintln(l.out, log)
+	}
 }

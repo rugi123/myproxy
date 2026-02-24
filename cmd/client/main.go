@@ -2,24 +2,28 @@ package main
 
 import (
 	"fmt"
+	"os"
 
+	"github.com/rugi123/myproxy/client/internal/baseServer"
 	"github.com/rugi123/myproxy/client/internal/config"
 	"github.com/rugi123/myproxy/client/internal/logger"
+	"github.com/rugi123/myproxy/client/internal/proxy"
 )
 
 func main() {
-	err, cfg := config.Load("internal/config/")
+	cfg, err := config.LoadClient("internal/config/")
 	if err != nil {
-		fmt.Println(err)
+		fmt.Printf("load conf error: %v", err)
+		os.Exit(1)
 	}
-	fmt.Println(cfg)
 
-	var level logger.Level = logger.Level(cfg.LogLevel)
-	log := logger.New(level)
+	log := logger.New(logger.Level(cfg.BaseConfig.LogLevel), os.Stdout, make(chan logger.Entry))
 
-	log.Debug("a")
-	log.Info("b")
-	log.Warn("c")
-	log.Error("d")
-	log.Fatal("d")
+	go log.Run()
+
+	server := baseServer.NewServer(&cfg.BaseConfig.App, log, proxy.HandleConnect)
+
+	if err := server.RunServer(); err != nil {
+		log.Fatal("run server error: %v", err)
+	}
 }
