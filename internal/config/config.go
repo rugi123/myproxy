@@ -19,6 +19,7 @@ type BaseConfig struct {
 
 type ServerConfig struct {
 	BaseConfig BaseConfig `mapstructure:",squash"`
+	TunnelPort int        `mapstructure:"tunnel_port"`
 }
 
 type ClientConfig struct {
@@ -72,6 +73,7 @@ func genServerConf(path string) error {
 	conf := `app:
   version: 0.1
   port: 8080
+tunnel_port: 8080
 log_level: 4`
 	file, err := os.Create(path + "config.yaml")
 	if err != nil {

@@ -44,7 +44,10 @@ func New(level Level, out io.Writer, ch chan Entry) *Logger {
 	}
 }
 
-func (l *Logger) Log(level Level, format string, args ...interface{}) {
+func (l *Logger) log(level Level, format string, args ...interface{}) {
+	if l.level < level {
+		return
+	}
 	l.ch <- Entry{
 		Level:   level,
 		Message: format,
@@ -54,19 +57,19 @@ func (l *Logger) Log(level Level, format string, args ...interface{}) {
 }
 
 func (l *Logger) Debug(format string, args ...interface{}) {
-	l.Log(LevelDebug, format, args...)
+	l.log(LevelDebug, format, args...)
 }
 func (l *Logger) Info(format string, args ...interface{}) {
-	l.Log(LevelInfo, format, args...)
+	l.log(LevelInfo, format, args...)
 }
 func (l *Logger) Warn(format string, args ...interface{}) {
-	l.Log(LevelWarn, format, args...)
+	l.log(LevelWarn, format, args...)
 }
 func (l *Logger) Error(format string, args ...interface{}) {
-	l.Log(LevelError, format, args...)
+	l.log(LevelError, format, args...)
 }
 func (l *Logger) Fatal(format string, args ...interface{}) {
-	l.Log(LevelFatal, format, args...)
+	l.log(LevelFatal, format, args...)
 	os.Exit(1)
 }
 
@@ -85,9 +88,9 @@ func (l *Logger) Run() {
 		case LevelDebug:
 			col = color.New(color.FgGreen).SprintFunc()
 		case LevelInfo:
-			col = color.RGB(255, 127, 0).SprintFunc()
+			col = color.New(color.FgYellow).SprintFunc()
 		case LevelWarn:
-			col = color.New(color.FgGreen).SprintFunc()
+			col = color.RGB(255, 127, 0).SprintFunc()
 		case LevelError:
 			col = color.New(color.FgRed).SprintFunc()
 		case LevelFatal:
@@ -96,7 +99,7 @@ func (l *Logger) Run() {
 
 		message := fmt.Sprintf(entry.Message, entry.Args...)
 		timestamp := entry.Time.Format("2006/01/02 15:04:05.000")
-		prefix := fmt.Sprintf("[%s]", l.level.String())
+		prefix := fmt.Sprintf("[%s]", entry.Level.String())
 		log := fmt.Sprintf("%s %s %s", timestamp, col(prefix), message)
 
 		fmt.Fprintln(l.out, log)
