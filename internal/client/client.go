@@ -3,6 +3,7 @@ package client
 import (
 	"fmt"
 	"net"
+	"sync"
 
 	"github.com/rugi123/myproxy/client/internal/config"
 	"github.com/rugi123/myproxy/client/internal/logger"
@@ -28,6 +29,11 @@ func (c *Client) run(handlers ...func(net.Conn)) error {
 	if err != nil {
 		return fmt.Errorf("setup connection error: %v", err)
 	}
+
+	var wg sync.WaitGroup
+	defer wg.Wait()
+
+	wg.Add(1)
 
 	go func(conn net.Conn) {
 		for _, handler := range handlers {
