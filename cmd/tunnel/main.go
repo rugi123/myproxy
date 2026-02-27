@@ -20,6 +20,8 @@ func main() {
 
 	go log.Run()
 
+	log.Info("test")
+
 	server := server.NewTunnelServer(cfg, log)
 
 	if err := server.RunTunnel(); err != nil {
