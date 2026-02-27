@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	cfg, err := config.LoadServer("D:/myproxy/internal/config/")
+	cfg, err := config.LoadServer("./internal/config/")
 	if err != nil {
 		fmt.Printf("load conf error: %v", err)
 		os.Exit(1)
@@ -23,6 +23,10 @@ func main() {
 	server := server.NewTunnelServer(cfg, log)
 
 	if err := server.RunTunnel(); err != nil {
+		log.Fatal("run tunnel server error: %v", err)
+	}
+
+	if err := server.RunServer(); err != nil {
 		log.Fatal("run server error: %v", err)
 	}
 }
