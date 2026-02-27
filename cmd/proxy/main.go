@@ -22,7 +22,5 @@ func main() {
 
 	server := client.NewClient(cfg, log)
 
-	if err := server.RunTunnelClient(); err != nil {
-		log.Fatal("run server error: %v", err)
-	}
+	server.RunTunnelClient()
 }

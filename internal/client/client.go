@@ -1,10 +1,11 @@
 package client
 
 import (
-	"io"
-	"log"
+	"bufio"
+	"bytes"
+	"fmt"
 	"net"
-	"time"
+	"net/http"
 
 	"github.com/rugi123/myproxy/client/internal/config"
 	"github.com/rugi123/myproxy/client/internal/logger"
@@ -22,26 +23,27 @@ func NewClient(config *config.ClientConfig, logger *logger.Logger) *Client {
 	}
 }
 
-func (c *Client) run() error {
+func (c *Client) RunTunnelClient() {
 	for {
 		// Пробуем подключиться и прочитать данные
 		conn, err := net.Dial("tcp", "194.87.95.228:8080")
 		if err != nil {
-			time.Sleep(5 * time.Second)
 			continue
 		}
 
-		// Читаем все что придет и выводим
-		io.Copy(log.Writer(), conn)
-		conn.Close()
+		data := make([]byte, 1024)
+		n, err := conn.Read(data)
+		req := parseMessage(data[:n])
+		fmt.Println(req)
 
-		time.Sleep(5 * time.Second)
 	}
 }
 
-func (c *Client) RunTunnelClient() error {
-	if err := c.run(); err != nil {
-		return err
+func parseMessage(message []byte) *http.Request {
+	reader := bufio.NewReader(bytes.NewReader(message))
+	req, err := http.ReadRequest(reader)
+	if err != nil {
+		fmt.Println("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
 	}
-	return nil
+	return req
 }
