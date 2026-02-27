@@ -1,9 +1,10 @@
 package client
 
 import (
-	"fmt"
+	"io"
+	"log"
 	"net"
-	"sync"
+	"time"
 
 	"github.com/rugi123/myproxy/client/internal/config"
 	"github.com/rugi123/myproxy/client/internal/logger"
@@ -21,31 +22,25 @@ func NewClient(config *config.ClientConfig, logger *logger.Logger) *Client {
 	}
 }
 
-func (c *Client) run(handlers ...func(net.Conn)) error {
-	port := fmt.Sprintf("%d", c.config.Server.Port)
-	url := net.JoinHostPort(c.config.Server.IP, port)
-
-	conn, err := net.Dial("tcp", url)
-	if err != nil {
-		return fmt.Errorf("setup connection error: %v", err)
-	}
-
-	var wg sync.WaitGroup
-	defer wg.Wait()
-
-	wg.Add(1)
-
-	go func(conn net.Conn) {
-		for _, handler := range handlers {
-			handler(conn)
+func (c *Client) run() error {
+	for {
+		// Пробуем подключиться и прочитать данные
+		conn, err := net.Dial("tcp", "194.87.95.228:8080")
+		if err != nil {
+			time.Sleep(5 * time.Second)
+			continue
 		}
-	}(conn)
 
-	return nil
+		// Читаем все что придет и выводим
+		io.Copy(log.Writer(), conn)
+		conn.Close()
+
+		time.Sleep(5 * time.Second)
+	}
 }
 
 func (c *Client) RunTunnelClient() error {
-	if err := c.run(c.tunnelHandler); err != nil {
+	if err := c.run(); err != nil {
 		return err
 	}
 	return nil

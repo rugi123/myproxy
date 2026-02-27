@@ -1,8 +1,6 @@
 package client
 
-import (
-	"net"
-)
+/*
 
 func (c *Client) tunnelHandler(conn net.Conn) {
 	data := make([]byte, 1024)
@@ -13,7 +11,7 @@ func (c *Client) tunnelHandler(conn net.Conn) {
 	}
 	c.logger.Debug(string(data[:n]))
 
-	/*
+
 
 		port := fmt.Sprintf("%d", c.config.BaseConfig.App.Port)
 		url := net.JoinHostPort("localhost", port)
@@ -30,6 +28,8 @@ func (c *Client) tunnelHandler(conn net.Conn) {
 			return
 		}
 
-	*/
+
 
 }
+
+*/
