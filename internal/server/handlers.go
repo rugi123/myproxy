@@ -1,6 +1,10 @@
 package server
 
-import "net"
+import (
+	"net"
+	"net/http"
+	"net/http/httputil"
+)
 
 func (s *TunnelServer) tunnelHandler(conn net.Conn) {
 	buffer := make([]byte, 1024)
@@ -12,6 +16,7 @@ func (s *TunnelServer) tunnelHandler(conn net.Conn) {
 	}
 }
 
+/*
 func (s *TunnelServer) serverHandler(conn net.Conn) {
 	buffer := make([]byte, 1024)
 	n, err := conn.Read(buffer)
@@ -20,4 +25,15 @@ func (s *TunnelServer) serverHandler(conn net.Conn) {
 	}
 
 	s.tunnelChan <- buffer[:n]
+}
+*/
+
+func (s *TunnelServer) serverHandler(w http.ResponseWriter, r *http.Request) {
+	dump, err := httputil.DumpRequest(r, true) // true = включая тело
+	if err != nil {
+		http.Error(w, "Error dumping request", http.StatusInternalServerError)
+		return
+	}
+	s.logger.Debug(string(dump))
+	s.tunnelChan <- dump
 }

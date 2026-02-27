@@ -3,6 +3,7 @@ package server
 import (
 	"fmt"
 	"net"
+	"net/http"
 	"sync"
 
 	"github.com/rugi123/myproxy/client/internal/config"
@@ -23,7 +24,7 @@ func NewTunnelServer(cfg *config.ServerConfig, logger *logger.Logger) *TunnelSer
 	}
 }
 
-func run(serverPort int, logger *logger.Logger, handlers ...func(conn net.Conn)) error {
+func runTcp(serverPort int, logger *logger.Logger, handlers ...func(conn net.Conn)) error {
 	port := fmt.Sprintf(":%d", serverPort)
 	listener, err := net.Listen("tcp", port)
 	if err != nil {
@@ -57,8 +58,20 @@ func run(serverPort int, logger *logger.Logger, handlers ...func(conn net.Conn))
 	}
 }
 
+func (s *TunnelServer) runHTTP(handler func(w http.ResponseWriter, r *http.Request)) error {
+	port := fmt.Sprintf(":%d", s.config.BaseConfig.App.Port)
+
+	http.HandleFunc("/", handler)
+
+	if err := http.ListenAndServe(port, nil); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *TunnelServer) RunTunnel() error {
-	err := run(s.config.TunnelPort, s.logger, s.tunnelHandler)
+	err := runTcp(s.config.TunnelPort, s.logger, s.tunnelHandler)
 	if err != nil {
 		return err
 	}
@@ -66,7 +79,7 @@ func (s *TunnelServer) RunTunnel() error {
 }
 
 func (s *TunnelServer) RunServer() error {
-	err := run(s.config.TunnelPort, s.logger, s.serverHandler)
+	err := s.runHTTP(s.serverHandler)
 	if err != nil {
 		return err
 	}
