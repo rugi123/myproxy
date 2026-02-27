@@ -71,18 +71,18 @@ func (s *TunnelServer) runHTTP(handler func(w http.ResponseWriter, r *http.Reque
 	return nil
 }
 
-func (s *TunnelServer) RunTunnel() error {
+func (s *TunnelServer) RunTunnel() {
 	err := runTcp(s.config.TunnelPort, s.logger, s.tunnelHandler)
 	if err != nil {
-		return err
+		s.logger.Fatal("tunnel server setup error: %v", err)
+		return
 	}
-	return nil
 }
 
-func (s *TunnelServer) RunServer() error {
+func (s *TunnelServer) RunServer() {
 	err := s.runHTTP(s.serverHandler)
 	if err != nil {
-		return err
+		s.logger.Fatal("server setup error: %v", err)
+		return
 	}
-	return nil
 }

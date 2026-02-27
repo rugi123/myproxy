@@ -24,11 +24,7 @@ func main() {
 
 	server := server.NewTunnelServer(cfg, log)
 
-	if err := server.RunTunnel(); err != nil {
-		log.Fatal("run tunnel server error: %v", err)
-	}
+	go server.RunTunnel()
 
-	if err := server.RunServer(); err != nil {
-		log.Fatal("run server error: %v", err)
-	}
+	go server.RunServer()
 }
