@@ -72,7 +72,7 @@ func LoadClient(path string) (*ClientConfig, error) {
 func genServerConf(path string) error {
 	conf := `app:
   version: 0.1
-  port: 8080
+  port: 80
 tunnel_port: 8080
 log_level: 4`
 	file, err := os.Create(path + "config.yaml")
@@ -86,9 +86,9 @@ log_level: 4`
 func genClientConf(path string) error {
 	conf := `app:
   version: 0.1
-  port: 8080
+  port: 80
 server: 
-  ip: 0
+  ip: 194.87.95.228
   port: 8080
 log_level: 4`
 	file, err := os.Create(path + "config.yaml")

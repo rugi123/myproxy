@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/rugi123/myproxy/client/internal/config"
 	"github.com/rugi123/myproxy/client/internal/logger"
@@ -24,7 +25,13 @@ func main() {
 
 	server := server.NewTunnelServer(cfg, log)
 
+	var wg sync.WaitGroup
+	defer wg.Wait()
+
+	wg.Add(2)
+
 	go server.RunTunnel()
 
 	go server.RunServer()
+
 }
