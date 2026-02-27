@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/rugi123/myproxy/client/internal/client"
 	"github.com/rugi123/myproxy/client/internal/config"
 	"github.com/rugi123/myproxy/client/internal/logger"
-	"github.com/rugi123/myproxy/client/internal/server"
 )
 
 func main() {
@@ -20,9 +20,9 @@ func main() {
 
 	go log.Run()
 
-	server := server.NewClientServer(cfg, log)
+	server := client.NewClient(cfg, log)
 
-	if err := server.RunClient(); err != nil {
+	if err := server.RunTunnelClient(); err != nil {
 		log.Fatal("run server error: %v", err)
 	}
 }

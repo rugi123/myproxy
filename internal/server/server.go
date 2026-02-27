@@ -9,23 +9,12 @@ import (
 	"github.com/rugi123/myproxy/client/internal/logger"
 )
 
-type ClientServer struct {
-	config *config.ClientConfig
-	logger *logger.Logger
-}
-
 type TunnelServer struct {
 	config     *config.ServerConfig
 	logger     *logger.Logger
 	tunnelChan chan []byte
 }
 
-func NewClientServer(cfg *config.ClientConfig, logger *logger.Logger) *ClientServer {
-	return &ClientServer{
-		config: cfg,
-		logger: logger,
-	}
-}
 func NewTunnelServer(cfg *config.ServerConfig, logger *logger.Logger) *TunnelServer {
 	return &TunnelServer{
 		config:     cfg,
@@ -78,14 +67,6 @@ func (s *TunnelServer) RunTunnel() error {
 
 func (s *TunnelServer) RunServer() error {
 	err := run(s.config.TunnelPort, s.logger, s.serverHandler)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (s *ClientServer) RunClient() error {
-	err := run(s.config.BaseConfig.App.Port, s.logger, s.clientHandler)
 	if err != nil {
 		return err
 	}
