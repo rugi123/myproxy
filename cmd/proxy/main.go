@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	cfg, err := config.LoadClient("D:/myproxy/internal/config/")
+	cfg, err := config.LoadClient("./internal/config/")
 	if err != nil {
 		fmt.Printf("load conf error: %v", err)
 		os.Exit(1)

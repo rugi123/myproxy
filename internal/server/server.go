@@ -63,10 +63,11 @@ func (s *TunnelServer) runHTTP(handler func(w http.ResponseWriter, r *http.Reque
 
 	http.HandleFunc("/", handler)
 
+	s.logger.Debug("server starts on %s", port)
+
 	if err := http.ListenAndServe(port, nil); err != nil {
 		return err
 	}
-	s.logger.Debug("server starts on %s", port)
 
 	return nil
 }
